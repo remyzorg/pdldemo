@@ -30,6 +30,7 @@ let os_db_user = ref None
 let os_db_password = ref None
 let os_db_database = ref None
 let os_db_unix_domain_socket_dir = ref None
+let%shared googlemaps_api_key = ref ""
 
 (* Get variables values from the ocsigenserver configuration file *)
 
@@ -43,6 +44,15 @@ let app = Ocsigen_extensions.Configuration.(
   ]
   in
   element ~name:"app" ~obligatory:true ~attributes ()
+)
+
+let googlemaps = Ocsigen_extensions.Configuration.(
+  let attributes = [
+    attribute ~name:"api-key" ~obligatory:false
+      (fun h -> googlemaps_api_key := h)
+  ]
+  in
+  element ~name:"googlemaps" ~obligatory:false ~attributes ()
 )
 
 (* Avatars configuration *)
@@ -74,4 +84,13 @@ let os_db = Ocsigen_extensions.Configuration.(
   element ~name:"os-db" ~attributes ()
 )
 
-let _ = Eliom_config.parse_config [app; avatars; os_db]
+
+
+let _ = Eliom_config.parse_config [
+  app; avatars; os_db; googlemaps
+]
+
+
+
+let%client _ =
+  googlemaps_api_key := !(~%googlemaps_api_key)

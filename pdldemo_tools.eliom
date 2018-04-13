@@ -39,5 +39,5 @@ let drawer_contents () =
   in
   li [ a ~a:[ a_class ["os-drawer-item"] ]
          ~service:Pdldemo_services.demo_service
-         [%i18n demo_intro] ()
+         [pcdata "Demo Pendulum"] ()
      ; submenu ]

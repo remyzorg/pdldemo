@@ -19,6 +19,12 @@ let%server demo_service =
     ~meth:(Eliom_service.Get Eliom_parameter.unit)
     ()
 
+let%server pdldemo_service =
+  Eliom_service.create
+    ~path:(Eliom_service.Path ["pdldemo"])
+    ~meth:(Eliom_service.Get Eliom_parameter.unit)
+    ()
+
 let%server settings_service = Eliom_service.create
   ~path:(Eliom_service.Path ["settings"])
   ~meth:(Eliom_service.Get Eliom_parameter.unit)
@@ -45,6 +51,9 @@ let%client upload_user_avatar_service =
   ~%upload_user_avatar_service
 
 let%client demo_service =
+  ~%demo_service
+
+let%client pdldemo_service =
   ~%demo_service
 
 let%client settings_service =

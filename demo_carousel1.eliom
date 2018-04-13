@@ -5,8 +5,12 @@
 
 [%%shared
   open Eliom_content.Html.F
+]
+
+[%%client
   open Eliom_content.Html
 ]
+
 
 (* Service for this demo *)
 let%server service =

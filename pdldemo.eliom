@@ -62,6 +62,38 @@ let%server () =
     (Os_session.connected_fun Pdldemo_handlers.upload_user_avatar_handler)
 
 
+let%shared handler myid_o () () =
+  let open Eliom_content.Html.D in
+  Pdldemo_container.page
+    ~a:[ a_class ["os-page-demo"] ]
+    myid_o
+    [ h2 [%i18n general_principles]
+    ; p [%i18n demo_intro_1]
+    ; p [%i18n demo_intro_2]
+    ; p [%i18n demo_widget_ot]
+    ; p [%i18n demo_widget_see_drawer]
+    ; p [%i18n demo_widget_feel_free]
+    ; p [%i18n demo_intro_3]
+    ]
+
+
+let%shared () =
+  let open Eliom_content.Html.D in
+  let registerDemo (module D : Pdldemo_tools.Page) =
+    Pdldemo_base.App.register
+      ~service:D.service
+      (Pdldemo_page.Opt.connected_page @@ fun myid_o () () ->
+        let%lwt p = D.page () in
+        Pdldemo_container.page
+          ~a:[a_class [D.page_class]]
+          myid_o p)
+  in
+  List.iter registerDemo Pdldemo_tools.demos;
+  Pdldemo_base.App.register
+    ~service:Pdldemo_services.pdldemo_service
+    (Pdldemo_page.Opt.connected_page handler)
+
+
 (* Print more debugging information when <debugmode/> is in config file
    (DEBUG = yes in Makefile.options).
    Example of use:

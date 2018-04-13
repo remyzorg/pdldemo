@@ -50,6 +50,7 @@
           password="%%DB_PASSWORD%%"
           database="%%DB_NAME%%"
         />
+        <googlemaps api-key="AIzaSyB4DW3QwQ23L30WidH5HaclGNlqaUgZdVc"/>
       </eliommodule>
       <eliom/>
       <if>

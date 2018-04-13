@@ -24,3 +24,7 @@ val app : Ocsigen_extensions.Configuration.element
 val avatars : Ocsigen_extensions.Configuration.element
 
 val os_db : Ocsigen_extensions.Configuration.element
+
+[%%shared.start]
+
+val googlemaps_api_key : string ref

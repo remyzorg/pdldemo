@@ -28,7 +28,6 @@ let%shared make ?user () =
   let items =
     item [%i18n S.home ~capitalize:true] Os_services.main_service
     :: item [%i18n S.about ~capitalize:true] Pdldemo_services.about_service
-    :: Demo_tools.drawer_contents ()
     :: Pdldemo_tools.drawer_contents ()
     :: items
   in
