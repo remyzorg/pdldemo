@@ -1,10 +1,13 @@
 
-(* [%%shared
- *    open Eliom_content.Html.F
- * ] *)
-
 [%%client
-  open Eliom_content.Html
+   open Eliom_content.Html
+]
+
+
+
+[%%shared
+  open Eliom_content.Html.D
+  module Option = Base.Option
 ]
 
 let%server service =
@@ -16,7 +19,6 @@ let%server service =
 
 (* Make service available on the client *)
 let%client service = ~%service
-
 
 let%shared name () = "Maps"
 
@@ -42,9 +44,58 @@ let%client onmapsload f =
   Dom.appendChild Dom_html.document##.body script
 
 
+
+
+
+[%%client
+open Googlemaps
+
+let create_map map =
+  print_endline "poney";
+  let m = Map.new_map (To_dom.of_div map)  () in
+  m
+
+
+let%sync p ~animate page_loading new_location =
+  let maps_already_loaded = () in
+  let maps_loading = () in
+  let map = None in
+
+  loop (
+    (await map || await new_location);
+    loop (!(
+      let center = LatLng.new_lat_lng
+          ~lat:(fst !!new_location) ~lng:(snd !!new_location)
+      in
+      Option.iter (!!map) ~f:(fun m -> Map.set_center m center)
+    ); await new_location)
+    ; pause
+  )
+  ||
+  loop (present page_loading (present maps_already_loaded (
+    !(print_endline "We don't load Maps again"))
+    (!(onmapsload (fun () ->
+       Pendulum.Signal.set_present_value maps_loading ()
+     ; animate () )));
+   pause))
+  ||
+  loop ( present maps_loading (
+    !(print_endline "Maps loaded")
+  ; emit map (Some (create_map (!!page_loading)))
+  ; pause
+  ; loop (
+    present page_loading (
+      emit map (Some (create_map (!!page_loading))) ;
+      emit maps_already_loaded;)
+  ; pause)))
+
+let p = p#create (div [], (0., 0.))
+
+]
+
+
 (* Page for this demo *)
 let%shared page () =
-  let open Eliom_content.Html.D in
   let marker_text_input = input ~a:[ a_input_type `Text ] () in
   let marker_btn_input =
     button ~a:[ a_class [ "marker-btn-input" ]][ pcdata "Search" ]
@@ -60,22 +111,23 @@ let%shared page () =
       ; marker_btn_cancel
       ]
   in
+
   let _ : unit Eliom_client_value.t = [%client
-    let open Googlemaps in
     Lwt_js_events.async (fun () ->
-      print_endline "Hello";
-      onmapsload (fun () ->
+      p#page_loading ~%map;
+      p#react;
 
-        (* (To_dom.of_div ~%map)##.innerHTML := Js.string "lol"; *)
-
-        (* print_endline "Ok"; *)
-        let position = LatLng.new_lat_lng ~lat:(-34.397) ~lng:150.644 in
-
-        let opts = MapOptions.create ~center:position ~zoom:10 () in
-        let () = MapOptions.set_zoom opts 8 in
-        let _map = Map.new_map (To_dom.of_div ~%map) ~opts () in
-        ()
-      );
+      if Geolocation.is_supported() then begin
+        let geo = Geolocation.geolocation in
+        let options = Geolocation.empty_position_options () in
+        options##.enableHighAccuracy := true;
+        let f_success e =
+            p#new_location (e##.coords##.latitude, e##.coords##.longitude);
+            p#react
+        in
+        let f_error e = Firebug.console##debug e in
+        geo##getCurrentPosition (Js.wrap_callback f_success) (Js.wrap_callback f_error) options;
+      end;
       Lwt.return ()
     )
 
