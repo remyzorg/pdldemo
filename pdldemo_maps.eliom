@@ -45,16 +45,22 @@ let%client onmapsload f =
 
 
 
-
-
 [%%client
 open Googlemaps
 
 let create_map map =
-  print_endline "poney";
-  let m = Map.new_map (To_dom.of_div map)  () in
+  let opts = MapOptions.create ~zoom:15 () in
+  let m = Map.new_map (To_dom.of_div map) ~opts () in
   m
 
+let update_location map new_location =
+  Firebug.console##debug map;
+  Firebug.console##debug new_location;
+  let center = LatLng.new_lat_lng
+      ~lat:(fst new_location) ~lng:(snd new_location)
+  in
+  Option.iter (map) ~f:(fun m ->
+    Map.set_center m center)
 
 let%sync p ~animate page_loading new_location =
   let maps_already_loaded = () in
@@ -62,13 +68,17 @@ let%sync p ~animate page_loading new_location =
   let map = None in
 
   loop (
+    !(print_endline "Trigger p");
+    present new_location !(print_endline "new_location")
+  )
+  ||
+  loop (
     (await map || await new_location);
-    loop (!(
-      let center = LatLng.new_lat_lng
-          ~lat:(fst !!new_location) ~lng:(snd !!new_location)
-      in
-      Option.iter (!!map) ~f:(fun m -> Map.set_center m center)
-    ); await new_location)
+    !(update_location !!map !!new_location);
+    loop (
+      present new_location
+        !(update_location !!map !!new_location)
+    )
     ; pause
   )
   ||
@@ -122,11 +132,13 @@ let%shared page () =
         let options = Geolocation.empty_position_options () in
         options##.enableHighAccuracy := true;
         let f_success e =
-            p#new_location (e##.coords##.latitude, e##.coords##.longitude);
-            p#react
+          p#new_location (e##.coords##.latitude, e##.coords##.longitude);
+          p#react
         in
         let f_error e = Firebug.console##debug e in
-        geo##getCurrentPosition (Js.wrap_callback f_success) (Js.wrap_callback f_error) options;
+        (* geo##getCurrentPosition (Js.wrap_callback f_success) (Js.wrap_callback f_error) options; *)
+        ignore @@
+        geo##watchPosition (Js.wrap_callback f_success) (Js.wrap_callback f_error) options;
       end;
       Lwt.return ()
     )
