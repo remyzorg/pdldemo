@@ -86,6 +86,7 @@ let%client start_watching_loc each_location =
     let center = LatLng.new_lat_lng
         ~lat ~lng
     in
+    print_endline "lol";
     Marker.set_position marker center;
     Map.set_center map center
 
@@ -116,19 +117,58 @@ let%client start_watching_loc each_location =
     ) (None, []) places
     in
     Eliom_lib.Option.iter (Map.fit_bounds map) bds;
-    Map.set_zoom map (min (Map.get_zoom map) 20);
+    Map.set_zoom map (min (Map.get_zoom map) 16);
     markers
-
-
 
 ]
 
 type%client page_load = {
   map : Html_types.div Eliom_content.Html.D.elt;
-  search_input : Html_types.input Eliom_content.Html.D.elt
+  search_input : Html_types.input Eliom_content.Html.D.elt;
+  locate_btn : Html_types.button Eliom_content.Html.D.elt;
 }
 
 
+(*
+  let%sync p ~animate =
+    input (page_loading : page_load);
+
+    let location = 0.,0. in
+    let maps_loading = () in
+    begin
+      !(onmapsload (fun () ->
+        Pendulum.Signal.set_present_value maps_loading ()
+      ; animate () ))
+    ; !(start_watching_loc (fun loc ->
+        Pendulum.Signal.set_present_value location loc
+      ; animate ()))
+    ; !()
+    ; (await page_loading || await maps_loading || await location)
+    ; !(print_endline "Maps loaded")
+    ; loop ( trap reload (
+      let map = create_map !!location (!!page_loading).map in
+      let mymarker = create_mymarker !!map !!location in
+      let places_changed = [] in
+      let searchbox = init_searchbox (!!page_loading).search_input
+          (fun places ->
+             Pendulum.Signal.set_present_value places_changed places ;
+             animate ()) in
+      let locate = () in
+      let searching = () in
+      let markers = [] in
+      let locate = () in
+         loop ( present page_loading ( exit reload ))
+      || loop ( present places_changed (
+                !(remove_markers !!markers);
+                emit markers (generate_markers !!map !!places_changed)))
+      || loop ( present places_changed (
+                trap t (loop (present locate (exit t); emit searching;))))
+      || loop ( present location (
+                present searching nothing
+                  !(update_location !!map !!mymarker !!location)
+      ))
+    ))
+*)
 
 
 [%%client
@@ -146,6 +186,7 @@ type%client page_load = {
     ; !(start_watching_loc (fun loc ->
         Pendulum.Signal.set_present_value location loc
       ; animate ()))
+    ; !()
 
     ; (await page_loading || await maps_loading || await location)
     ; !(print_endline "Maps loaded")
@@ -156,23 +197,39 @@ type%client page_load = {
         Pendulum.Signal.set_present_value places_changed places ;
         animate ())
       in
+      let locate = () in
+      !((To_dom.of_button (!!page_loading).locate_btn)##.onclick :=
+          Dom_html.handler (fun _ ->
+            Pendulum.Signal.set_present_value locate ();
+            animate (); Js._true
+          ));
       loop ( present page_loading (
+        !((To_dom.of_button (!!page_loading).locate_btn)##.onclick :=
+            Dom_html.handler (fun _ ->
+              Pendulum.Signal.set_present_value locate ();
+              animate (); Js._true
+            ));
         emit map (create_map !!location (!!page_loading).map));
         emit mymarker (create_mymarker !!map !!location);
         emit searchbox (init_searchbox (!!page_loading).search_input (fun places ->
-        Pendulum.Signal.set_present_value places_changed places;
-        animate ()))
+          Pendulum.Signal.set_present_value places_changed places;
+          animate ()))
       )
       ||
-      (let markers = [] in
-       loop ( present places_changed (
-         !(remove_markers !!markers);
-         emit markers (generate_markers !!map !!places_changed);
-      )))
+      let searching = () in
+      let markers = [] in
+      loop ( present places_changed (
+        !(remove_markers !!markers);
+        emit markers (generate_markers !!map !!places_changed)))
+      ||
+      loop ( present places_changed (
+        trap t (loop (present locate (exit t); emit searching;))))
       ||
       loop ( present location (
-        !(update_location !!map !!mymarker !!location)
+        present searching nothing !(update_location !!map !!mymarker !!location)
       ))
+      ||
+      loop ( present locate ( emit location !!location); pause)
     end
 
 ]
@@ -180,7 +237,8 @@ type%client page_load = {
 
 
 let%client p =
-  p#create ({map = div []; search_input = input ()})
+  p#create ({map = div []; search_input = input ();
+            locate_btn = button []})
 
 
 
@@ -194,6 +252,7 @@ let%shared page () =
   in
 
   let map = Eliom_content.Html.D.div ~a:[a_id "map"; a_class ["map"]] [] in
+  let locate_btn = button [pcdata "Locate"] in
 
   let marker_text_input = input ~a:[ a_input_type `Text ] () in
   let marker_btn_input =
@@ -211,14 +270,15 @@ let%shared page () =
   in
   let page = div
       [ marker_input
-      ; search_input
+      ; div [search_input; locate_btn]
       ; map
       ]
   in
 
   let _ : unit Eliom_client_value.t = [%client
     Lwt_js_events.async (fun () ->
-      p#page_loading ({map = ~%map; search_input = ~%search_input});
+      p#page_loading ({map = ~%map; search_input = ~%search_input;
+                      locate_btn = ~%locate_btn });
       p#react;
       Lwt.return ()
     )
