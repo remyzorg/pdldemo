@@ -6,6 +6,11 @@
               content="default-src 'self' data: gap: https://ssl.gstatic.com
                          %%APPSERVER%%;
                        script-src 'self'
+                       https://www.google-analytics.com
+                         https://www.googletagmanager.com
+                         https://maps.googleapis.com
+                         https://piwik.besport.com
+                         https://ssl.gstatic.com
                          https://ssl.gstatic.com
                          'unsafe-eval'
                          'unsafe-inline';

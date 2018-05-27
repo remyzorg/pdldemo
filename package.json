@@ -16,5 +16,13 @@
   "bugs": {
     "url": "https://github.com/remyzorg/pdldemo/issues"
   },
-  "homepage": "https://github.com/remyzorg/pdldemo#readme"
+  "homepage": "https://github.com/remyzorg/pdldemo#readme",
+  "dependencies": {
+    "autoprefixer": "^8.5.1",
+    "cordova": "^8.0.0",
+    "cordova-hot-code-push-cli": "^1.1.1",
+    "postcss-cli": "^5.0.0",
+    "read-package-json": "^2.0.13",
+    "xml2js": "^0.4.19"
+  }
 }

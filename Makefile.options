@@ -18,7 +18,7 @@ SERVER_FILES          := $(wildcard *.eliomi *.eliom *_db.ml) \
 # Source files for the client. By default, it's all eliom and eliomi files
 # in the project root directory.
 CLIENT_FILES          := $(wildcard *.eliomi *.eliom) \
-                         pdldemo_i18n.eliom 
+                         pdldemo_i18n.eliom
 
 # OCamlfind packages for the server (for modules which defines services)
 SERVER_ELIOM_PACKAGES := ocsigen-start.server
@@ -30,7 +30,8 @@ SERVER_PACKAGES       := lwt.ppx js_of_ocaml-ppx.deriving ppx_deriving.std
 SERVER_DB_PACKAGES    := pgocaml.syntax
 
 # OCamlfind packages for the client
-CLIENT_PACKAGES       := pendulum-lib pendulum-ppx lwt.ppx js_of_ocaml-ppx js_of_ocaml-ppx.deriving ppx_deriving.std ocsigen-start.client gen_js_api base ocaml-googlemaps 
+CLIENT_PACKAGES       := pendulum-lib pendulum-ppx lwt.ppx js_of_ocaml-ppx js_of_ocaml-ppx.deriving ppx_deriving.std ocsigen-start.client gen_js_api \
+                         batteries base ocaml-googlemaps cordova-plugin-geolocation
 
 CLIENT_LINK_OPT := -no-check-prims -jsopt +gen_js_api/ojs_runtime.js \
                 -jsopt +nat.js -jsopt +weak.js -jsopt +base/runtime.js

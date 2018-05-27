@@ -7,7 +7,7 @@
 
 [%%shared
   open Eliom_content.Html.D
-  module Option = Base.Option
+  (* module Option = BatOption *)
 ]
 
 let%server service =
@@ -86,7 +86,6 @@ let%client start_watching_loc each_location =
     let center = LatLng.new_lat_lng
         ~lat ~lng
     in
-    print_endline "lol";
     Marker.set_position marker center;
     Map.set_center map center
 
@@ -94,7 +93,6 @@ let%client start_watching_loc each_location =
     let inp = To_dom.of_element elt in
     let sb = SearchBox.new_search_box inp () in
     ignore @@ Event.add_listener (SearchBox.t_to_js sb) "places_changed" (fun _ ->
-      print_endline "lol";
       f @@ SearchBox.get_places sb
       );
     sb
@@ -226,7 +224,9 @@ type%client page_load = {
         trap t (loop (present locate (exit t); emit searching;))))
       ||
       loop ( present location (
-        present searching nothing !(update_location !!map !!mymarker !!location)
+        present searching nothing (
+          !(update_location !!map !!mymarker !!location)
+        )
       ))
       ||
       loop ( present locate ( emit location !!location); pause)
@@ -285,4 +285,3 @@ let%shared page () =
 
   ] in
   Lwt.return [ page ]
-
